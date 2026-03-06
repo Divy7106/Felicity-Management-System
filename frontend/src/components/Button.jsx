@@ -29,7 +29,7 @@ const Button = ({
       onClick={onClick}
       disabled={disabled}
       title={toolTip}
-      className={`${isbaseStyles ? baseStyles : ""} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${className}`}
+      className={`${isbaseStyles ? baseStyles : ""} ${variants[variant]} ${fullWidth ? 'w-full' : ''} ${disabled ? 'opacity-60 cursor-not-allowed' : ''} ${className}`}
       {...props}
     >
       {children}

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Input from "../Input";
 import TextArea from "../TextArea";
 import Button from "../Button";
+import FormBuilder from "./FormBuilder";
 import { getOrgMaxEvent, editEventForm } from "../../services/events";
 import { UserContext } from "../../contexts/UserContexts";
 import { closeEvent } from "../../services/participant";
@@ -15,7 +16,10 @@ function EditEventForm() {
     const [loading, setLoading] = useState(true);
     const [eventData, setEventData] = useState(null);
     const [isFormLocked, setIsFormLocked] = useState(false);
-    const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
+    const [isEventStarted, setIsEventStarted] = useState(false);
+    const [isRegistrationClosed, setIsRegistrationClosed] = useState(false);
+
+    const [regForm, setRegForm] = useState([]);
 
     const [formData, setFormData] = useState({
         eventDescription: "",
@@ -38,48 +42,46 @@ function EditEventForm() {
             const response = await getOrgMaxEvent(id);
             const event = response.data.response;
 
-            // Verify organizer owns this event
             if (event.organizerId !== userData._id) {
                 setMessage({ text: 'You do not have permission to edit this event.', type: 'error' });
                 setTimeout(() => navigate('/organizer-dashboard'), 2000);
                 return;
             }
 
-            // Check if form is locked
             const locked = event.formLocked || false;
             setIsFormLocked(locked);
 
-            // Check if registration deadline has passed
-            const deadlinePassed = new Date(event.registrationDeadline) < new Date();
-            setIsDeadlinePassed(deadlinePassed);
+            const currentDate = new Date();
+            const startDate = new Date(event.eventStartDate);
+            const endDate = new Date(event.eventEndDate);
 
-            if (locked) {
-                setMessage({ text: 'Event form is locked. First registration has been received.', type: 'warning' });
-            }
+            const eventStarted = currentDate >= startDate;
+            setIsEventStarted(eventStarted);
 
-            if (deadlinePassed) {
-                setMessage({ text: 'Registration deadline has passed. Editing is disabled.', type: 'warning' });
-            }
-            var status = null
-            const currentDate = new Date()
-            const startDate = new Date(event.eventStartDate)
-            const endDate = new Date(event.eventEndDate)
+            const regClosed = new Date(event.registrationDeadline) < currentDate;
+            setIsRegistrationClosed(regClosed);
 
+            var status = null;
             if (currentDate < startDate) {
-                status = 'Published'
+                status = 'Published';
             } else if (currentDate >= startDate && currentDate <= endDate) {
-                status = 'OnGoing'
+                status = 'OnGoing';
             } else {
-                status = 'Closed'
+                status = 'Closed';
             }
 
-            if(status === 'Closed') {
-                setMessage({ text: 'Event is closed.', type: 'warning' });
+            if (eventStarted) {
+                setMessage({ text: status === 'Closed' ? 'Event is closed. Editing is disabled.' : 'Event has started. Editing is disabled.', type: 'warning' });
+            } else if (regClosed) {
+                setMessage({ text: 'Registration is closed. Editing is disabled.', type: 'warning' });
+            } else if (locked) {
+                setMessage({ text: 'Registration form is locked (first registration received). Other fields can still be edited.', type: 'warning' });
             }
 
-            event.status = status
+            event.status = status;
 
             setEventData(event);
+            setRegForm(event.formFields || []);
             setFormData({
                 eventDescription: event.eventdescription || "",
                 registrationDeadline: event.registrationDeadline ? (new Date(new Date(event.registrationDeadline).getTime() + 5.5 * 60 * 60 * 1000)).toISOString().slice(0, 16) : "",
@@ -162,10 +164,21 @@ function EditEventForm() {
             closeRegistration: closeRegistration
         };
 
+        // Include formFields only if form is not locked
+        if (!isFormLocked) {
+            updateData.formFields = regForm;
+        }
+
         try {
             await editEventForm(id, updateData);
-            setMessage({ text: closeRegistration ? 'Event updated and registration closed successfully!' : 'Event updated successfully!', type: 'success' });
-            setTimeout(() => navigate('/organizer-dashboard'), 2000);
+            if (closeRegistration) {
+                setMessage({ text: 'Event updated and registration closed successfully!', type: 'success' });
+                setIsRegistrationClosed(true);
+                fetchEventData();
+            } else {
+                setMessage({ text: 'Event updated successfully!', type: 'success' });
+                setTimeout(() => navigate('/organizer-dashboard'), 2000);
+            }
         } catch (err) {
             console.error('Error updating event:', err);
             setErrors(prev => ({ ...prev, backendError: err.response?.data?.error || 'Failed to update event' }));
@@ -177,7 +190,7 @@ function EditEventForm() {
             setMessage({ text: '', type: '' })
             await closeEvent(id)
             setMessage({ text: `Event closed successfully.`, type: 'success' })
-            fetchData()
+            fetchEventData()
         } catch (err) {
             setMessage({ text: err.response?.data?.msg || 'Failed.', type: 'error' })
         }
@@ -202,7 +215,7 @@ function EditEventForm() {
         );
     }
 
-    const isEditingDisabled = isFormLocked || isDeadlinePassed;
+    const isEditingDisabled = isEventStarted || isRegistrationClosed;
 
     return (
         <div className="w-full px-4 lg:px-8 pb-10">
@@ -367,25 +380,37 @@ function EditEventForm() {
                     </div>
                 )}
 
-                {/* Registration Form Fields (if applicable) */}
-                {eventData.formFields && eventData.formFields.length > 0 && (
-                    <div className="mt-4 bg-stone-700 rounded-lg p-4">
-                        <p className="text-stone-300 text-sm mb-3">Registration Form Fields</p>
-                        <div className="space-y-2">
-                            {eventData.formFields.map((field, idx) => (
-                                <div key={idx} className="bg-stone-800 rounded-lg p-3 flex justify-between items-center">
-                                    <div className="text-white">
-                                        <span className="font-medium">{field.label}</span>
-                                        <span className="text-stone-400 text-sm ml-3">({field.fieldType})</span>
-                                        {field.isRequired && <span className="text-orange-400 ml-2">*</span>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {eventData.formLocked && (
-                            <p className="mt-2 text-yellow-400 text-xs">⚠️ Form is locked - first registration received</p>
-                        )}
+                {/* Registration Form Fields */}
+                {!isFormLocked && !isEventStarted && !isRegistrationClosed ? (
+                    <div className="mt-4">
+                        <FormBuilder
+                            regForm={regForm}
+                            setRegForm={setRegForm}
+                            eventName={eventData.eventName}
+                            eventDescription={formData.eventDescription}
+                            title="Edit Registration Form"
+                        />
                     </div>
+                ) : (
+                    eventData.formFields && eventData.formFields.length > 0 && (
+                        <div className="mt-4 bg-stone-700 rounded-lg p-4">
+                            <p className="text-stone-300 text-sm mb-3">Registration Form Fields</p>
+                            <div className="space-y-2">
+                                {eventData.formFields.map((field, idx) => (
+                                    <div key={idx} className="bg-stone-800 rounded-lg p-3 flex justify-between items-center">
+                                        <div className="text-white">
+                                            <span className="font-medium">{field.label}</span>
+                                            <span className="text-stone-400 text-sm ml-3">({field.fieldType})</span>
+                                            {field.isRequired && <span className="text-orange-400 ml-2">*</span>}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {isFormLocked && (
+                                <p className="mt-2 text-yellow-400 text-xs">Registration form is locked &mdash; first registration has been received</p>
+                            )}
+                        </div>
+                    )
                 )}
             </div>
 
@@ -395,8 +420,7 @@ function EditEventForm() {
 
                 {isEditingDisabled && (
                     <div className="mb-4 p-3 rounded-lg bg-red-500/20 text-red-400 text-sm">
-                        Editing is disabled because {isFormLocked ? 'the form is locked' : 
-                        (eventData.status === 'Closed' ? "Event is closed." : "the registration deadline has passed.")}.
+                        Editing is disabled because {eventData.status === 'Closed' ? "the event is closed." : isEventStarted ? "the event has started." : "registration is closed."}.
                     </div>
                 )}
 
@@ -489,17 +513,19 @@ function EditEventForm() {
                     </div>
                 }
 
-                {eventData.status === 'Published' &&
+                {(eventData.status === 'Published') &&
                     <div className="flex flex-col sm:flex-row gap-3">
-                        <Button
-                            isbaseStyles={false}
-                            variant="custom"
-                            className="px-6 py-2 bg-red-600 hover:bg-red-700 cursor-pointer text-white rounded-lg disabled:bg-gray-600 disabled:cursor-not-allowed"
-                            onClick={() => handleSubmit(true)}
-                            disabled={isEditingDisabled}
-                        >
-                            Save & Close Registration
-                        </Button>
+                        {!isRegistrationClosed && (
+                            <Button
+                                isbaseStyles={false}
+                                variant="custom"
+                                className="px-6 py-2 bg-red-600 hover:bg-red-700 cursor-pointer text-white rounded-lg disabled:bg-gray-600 disabled:cursor-not-allowed"
+                                onClick={() => handleSubmit(true)}
+                                disabled={isEditingDisabled}
+                            >
+                                Save & Close Registration
+                            </Button>
+                        )}
 
                         <Button
                             isbaseStyles={false}

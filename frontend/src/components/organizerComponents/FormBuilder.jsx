@@ -9,6 +9,7 @@ function FormBuilder({
     setRegForm,
     eventName = "",
     eventDescription = "",
+    title = "Create Registration Form",
 }) {
 
     const [currentFeild, setCurrentField] = useState(null)
@@ -122,13 +123,76 @@ function FormBuilder({
 
     const handleDeleteField = (fieldId) => {
         const updated = regForm.filter(field => field.fieldId !== fieldId)
-        // Reindex fieldIds
         updated.forEach((field, index) => {
             field.fieldId = index + 1
         })
         setRegForm(updated)
         setCurrentField(null)
     }
+
+    const handleMoveUp = (fieldId) => {
+        const idx = fieldId - 1
+        if (idx <= 0) return
+        const updated = [...regForm]
+        ;[updated[idx - 1], updated[idx]] = [updated[idx], updated[idx - 1]]
+        updated.forEach((field, i) => { field.fieldId = i + 1 })
+        setRegForm(updated)
+        setCurrentField(fieldId - 1)
+    }
+
+    const handleMoveDown = (fieldId) => {
+        const idx = fieldId - 1
+        if (idx >= regForm.length - 1) return
+        const updated = [...regForm]
+        ;[updated[idx], updated[idx + 1]] = [updated[idx + 1], updated[idx]]
+        updated.forEach((field, i) => { field.fieldId = i + 1 })
+        setRegForm(updated)
+        setCurrentField(fieldId + 1)
+    }
+
+    const renderReorderControls = (fieldId) => (
+        <div className="flex items-center gap-1">
+            <button
+                onClick={() => handleMoveUp(fieldId)}
+                disabled={fieldId === 1}
+                className="p-2 hover:bg-stone-700 rounded-lg transition-colors disabled:opacity-30"
+                title="Move up"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className="text-white">
+                    <path d="M18 15l-6-6-6 6" />
+                </svg>
+            </button>
+            <button
+                onClick={() => handleMoveDown(fieldId)}
+                disabled={fieldId === regForm.length}
+                className="p-2 hover:bg-stone-700 rounded-lg transition-colors disabled:opacity-30"
+                title="Move down"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className="text-white">
+                    <path d="M6 9l6 6 6-6" />
+                </svg>
+            </button>
+            <button
+                onClick={() => handleDeleteField(fieldId)}
+                className="p-2 hover:bg-stone-700 hover:bg-opacity-20 rounded-lg transition-colors"
+                title="Delete field"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className="text-red-500">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+            </button>
+        </div>
+    )
 
     useEffect(() => {
         const onDocClick = (e) => {
@@ -142,7 +206,7 @@ function FormBuilder({
 
     return (
         <div className="overflow-hidden">
-            <h1 className="text-white text-3xl px-5 py-4 mt-3 font-semibold">Create Registration Form</h1>
+            <h1 className="text-white text-3xl px-5 py-4 mt-3 font-semibold">{title}</h1>
             <div className="flex mb-5" ref={containerRef}>
                 <div className="bg-stone-800 w-fit h-fit rounded-xl text-white ml-5
          flex justify-center items-center flex-col flex-shrink-0">
@@ -289,32 +353,8 @@ function FormBuilder({
                                                 onChange={(e) => handleNoteFieldChange(field.fieldId, e)}
                                             >
                                             </AutoResizeTextarea>
-                                            {/* Delete Button */}
                                             <div className="flex justify-end mt-2">
-                                                <button
-                                                    onClick={() => handleDeleteField(field.fieldId)}
-                                                    className="p-2 hover:bg-stone-700 hover:bg-opacity-20 rounded-lg transition-colors"
-                                                    title="Delete field"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        width="20"
-                                                        height="20"
-                                                        viewBox="0 0 24 24"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        strokeWidth="2"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        className="text-red-500"
-                                                    >
-                                                        <path d="M3 6h18" />
-                                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                        <line x1="10" y1="11" x2="10" y2="17" />
-                                                        <line x1="14" y1="11" x2="14" y2="17" />
-                                                    </svg>
-                                                </button>
+                                                {renderReorderControls(field.fieldId)}
                                             </div>
                                         </div>
                                     )
@@ -363,32 +403,7 @@ function FormBuilder({
                                                         if (e.key === 'Enter') setCurrentField(null)
                                                     }}
                                                 />
-                                                <div className="flex justify-end">
-                                                    <button
-                                                        onClick={() => handleDeleteField(field.fieldId)}
-                                                        className="p-2 hover:bg-stone-700 hover:bg-opacity-20 rounded-lg transition-colors"
-                                                        title="Delete field"
-                                                    >
-                                                        <svg
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            width="20"
-                                                            height="20"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            className="text-red-500"
-                                                        >
-                                                            <path d="M3 6h18" />
-                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                            <line x1="10" y1="11" x2="10" y2="17" />
-                                                            <line x1="14" y1="11" x2="14" y2="17" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
+                                                {renderReorderControls(field.fieldId)}
                                             </div>
 
 
@@ -460,32 +475,7 @@ function FormBuilder({
                                                 >
                                                     Add Option
                                                 </Button>
-                                                <div className="flex justify-end">
-                                                    <button
-                                                        onClick={() => handleDeleteField(field.fieldId)}
-                                                        className="p-2 hover:bg-stone-700 hover:bg-opacity-20 rounded-lg transition-colors"
-                                                        title="Delete field"
-                                                    >
-                                                        <svg
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            width="20"
-                                                            height="20"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            className="text-red-500"
-                                                        >
-                                                            <path d="M3 6h18" />
-                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                            <line x1="10" y1="11" x2="10" y2="17" />
-                                                            <line x1="14" y1="11" x2="14" y2="17" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
+                                                {renderReorderControls(field.fieldId)}
                                             </div>
 
                                             {/* Display Options */}
@@ -559,33 +549,7 @@ function FormBuilder({
                                                 >
                                                     Add Option
                                                 </Button>
-                                                {/* Delete Button */}
-                                                <div className="flex justify-end">
-                                                    <button
-                                                        onClick={() => handleDeleteField(field.fieldId)}
-                                                        className="p-2 hover:bg-stone-700 hover:bg-opacity-20 rounded-lg transition-colors"
-                                                        title="Delete field"
-                                                    >
-                                                        <svg
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            width="20"
-                                                            height="20"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            className="text-red-500"
-                                                        >
-                                                            <path d="M3 6h18" />
-                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                            <line x1="10" y1="11" x2="10" y2="17" />
-                                                            <line x1="14" y1="11" x2="14" y2="17" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
+                                                {renderReorderControls(field.fieldId)}
                                             </div>
 
                                         </div>
@@ -644,33 +608,7 @@ function FormBuilder({
                                                     onChange={(e) => handleInputFieldChange(field.fieldId, 'isRequired', e.target.checked)}
                                                     label="Required"
                                                 />
-                                                {/* Delete Button */}
-                                                <div className="flex justify-end mt-2">
-                                                    <button
-                                                        onClick={() => handleDeleteField(field.fieldId)}
-                                                        className="p-2 hover:bg-stone-700 hover:bg-opacity-20 rounded-lg transition-colors"
-                                                        title="Delete field"
-                                                    >
-                                                        <svg
-                                                            xmlns="http://www.w3.org/2000/svg"
-                                                            width="20"
-                                                            height="20"
-                                                            viewBox="0 0 24 24"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            strokeWidth="2"
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            className="text-red-500"
-                                                        >
-                                                            <path d="M3 6h18" />
-                                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                            <line x1="10" y1="11" x2="10" y2="17" />
-                                                            <line x1="14" y1="11" x2="14" y2="17" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
+                                                {renderReorderControls(field.fieldId)}
                                             </div>
 
                                         </div>

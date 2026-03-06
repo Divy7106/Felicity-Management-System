@@ -53,12 +53,14 @@ function TeamChat() {
         loadHistory()
     }, [teamRegId])
 
-    // Connect to socket - uses cookies for auth (withCredentials: true)
+    // Connect to socket - uses token and cookies for auth
     useEffect(() => {
-        const socketUrl = baseUrl || window.location.origin.replace(':5173', ':3000')
+        const socketUrl = baseUrl || window.location.origin
+        const token = localStorage.getItem('authToken')
         const newSocket = io(socketUrl, {
             withCredentials: true,
             transports: ['websocket', 'polling'],
+            auth: { token },
         })
 
         newSocket.on('connect', () => {

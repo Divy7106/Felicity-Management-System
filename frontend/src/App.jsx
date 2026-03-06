@@ -12,33 +12,45 @@ function App() {
   const location = useLocation()
   const navigate = useNavigate()
   const { updateUserData } = useContext(UserContext)
+  const [loading, setLoading] = useState(true)
+
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/'
 
   useEffect(() => {
+    if (isAuthPage) {
+      setLoading(false)
+      return
+    }
     getUserData()
       .then((r) => {
         if (r.data.response) {
           updateUserData(r.data.response)
         }
       }).catch((err) => {
-        if(location.pathname !== '/signup')
-          navigate('/login')
+        navigate('/login')
+      }).finally(() => {
+        setLoading(false)
       })
   }, [])
 
-  if (location.pathname === '/login' || location.pathname === '/signup') {
+  if (isAuthPage) {
     return (
       <div className="bg-stone-900 min-h-screen">
         <Outlet />
       </div>
     )
-  } else {
-    return (
-        <div className="bg-stone-900 min-h-screen">
-          <Header />
-          <Outlet />
-        </div>
-    )
   }
+
+  if (loading) {
+    return <div className="bg-stone-900 min-h-screen"></div>
+  }
+
+  return (
+      <div className="bg-stone-900 min-h-screen">
+        <Header />
+        <Outlet />
+      </div>
+  )
 }
 
 export default App

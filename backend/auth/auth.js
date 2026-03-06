@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken'
 import bcrypt from "bcrypt";
-import { response } from 'express';
 import crypto from 'crypto'
 
 function genToken(email, userId) {
@@ -9,7 +8,7 @@ function genToken(email, userId) {
         userId: userId,
     },
     process.env.SECRET_KEY,
-    {algorithm: 'HS512', expiresIn: '7d'});
+    {algorithm: process.env.JWT_ALGORITHM || 'HS512', expiresIn: process.env.JWT_EXPIRY || '7d'});
 
     return token;
 }
@@ -37,11 +36,13 @@ async function getUserLogin(userModel, email, password, res, sendResponse = 1) {
         res.cookie("sessionId", token, {
             httpOnly: true,
             secure: process.env.COOKIE_SECURITY === "true",
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            sameSite: process.env.COOKIE_SAME_SITE || "lax",
+            maxAge: parseInt(process.env.COOKIE_MAX_AGE) || 7 * 24 * 60 * 60 * 1000,
         });
+        // Store token on res.locals so controllers can access it
+        res.locals.authToken = token;
         if(sendResponse)
-            res.status(200).json({ msgType: "Success", msg: "Login successful", err: undefined, response: user });
+            res.status(200).json({ msgType: "Success", msg: "Login successful", err: undefined, response: user, token: token });
 
     } catch (err) {
         if (sendResponse)

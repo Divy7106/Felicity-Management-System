@@ -16,6 +16,7 @@ function EventDetails() {
     const [message, setMessage] = useState({ text: '', type: '' })
     const [ticketInfo, setTicketInfo] = useState(null)
     const [formErrors, setFormErrors] = useState({})
+    const [fileUploads, setFileUploads] = useState({})
 
     // Team registration state
     const [showTeamForm, setShowTeamForm] = useState(false)
@@ -50,13 +51,17 @@ function EventDetails() {
         const requiredFields = event.formFields?.filter(field => field.isRequired && field.fieldType !== 'note')
         
         requiredFields?.forEach(field => {
-            const value = formResponses[field.fieldId]
-            
-            if (field.fieldType === 'checkbox') {
+            if (field.fieldType === 'file') {
+                if (!fileUploads[field.fieldId]) {
+                    errors[field.fieldId] = `${field.label} is required`
+                }
+            } else if (field.fieldType === 'checkbox') {
+                const value = formResponses[field.fieldId]
                 if (!value || !Array.isArray(value) || value.length === 0) {
                     errors[field.fieldId] = `${field.label} is required`
                 }
             } else {
+                const value = formResponses[field.fieldId]
                 if (!value || value.trim() === '') {
                     errors[field.fieldId] = `${field.label} is required`
                 }
@@ -78,7 +83,7 @@ function EventDetails() {
             setRegistering(true)
             setMessage({ text: '', type: '' })
             setFormErrors({})
-            const res = await registerForEvent(id, formResponses)
+            const res = await registerForEvent(id, formResponses, fileUploads)
             setTicketInfo(res.data.registration)
             setMessage({ text: 'Registration successful! Check your email.', type: 'success' })
             setShowForm(false)
@@ -127,7 +132,7 @@ function EventDetails() {
                 teamName: teamName.trim(),
                 memberEmails: validEmails,
                 formResponses,
-            })
+            }, fileUploads)
             setMessage({ text: res.data.msg || 'Team created! Invitations sent.', type: 'success' })
             setShowTeamForm(false)
             setTeamName('')
@@ -409,6 +414,35 @@ function EventDetails() {
                                                     )}
                                                 </>
                                             )}
+                                            {field.fieldType === 'file' && (
+                                                <>
+                                                    <input
+                                                        type="file"
+                                                        accept={field.allowedFileFormats?.map(f => `.${f}`).join(',') || '*'}
+                                                        onChange={(e) => {
+                                                            const file = e.target.files[0]
+                                                            if (file) {
+                                                                setFileUploads({ ...fileUploads, [field.fieldId]: file })
+                                                                if (formErrors[field.fieldId]) {
+                                                                    setFormErrors({ ...formErrors, [field.fieldId]: null })
+                                                                }
+                                                            }
+                                                        }}
+                                                        className={`w-full px-4 py-2.5 bg-stone-700 border rounded-lg text-white file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-orange-400 file:text-white hover:file:bg-orange-500 ${
+                                                            formErrors[field.fieldId] ? 'border-red-500' : 'border-stone-600'
+                                                        }`}
+                                                    />
+                                                    {field.allowedFileFormats?.length > 0 && (
+                                                        <p className="text-stone-500 text-xs mt-1">Allowed: {field.allowedFileFormats.join(', ')}</p>
+                                                    )}
+                                                    {fileUploads[field.fieldId] && (
+                                                        <p className="text-green-400 text-xs mt-1">Selected: {fileUploads[field.fieldId].name}</p>
+                                                    )}
+                                                    {formErrors[field.fieldId] && (
+                                                        <p className="text-red-400 text-xs mt-1">{formErrors[field.fieldId]}</p>
+                                                    )}
+                                                </>
+                                            )}
                                             {field.fieldType === 'note' && (
                                                 <p className="text-stone-400 text-sm italic">{field.placeholder || field.label}</p>
                                             )}
@@ -525,6 +559,48 @@ function EventDetails() {
                                                             <option key={i} value={opt}>{opt}</option>
                                                         ))}
                                                     </select>
+                                                )}
+                                                {field.fieldType === 'checkbox' && (
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {(field.options || []).map((opt, i) => (
+                                                            <label key={i} className="flex items-center gap-2 text-stone-300 cursor-pointer">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={(formResponses[field.fieldId] || []).includes(opt)}
+                                                                    onChange={(e) => {
+                                                                        const current = formResponses[field.fieldId] || []
+                                                                        const updated = e.target.checked
+                                                                            ? [...current, opt]
+                                                                            : current.filter(v => v !== opt)
+                                                                        setFormResponses({ ...formResponses, [field.fieldId]: updated })
+                                                                    }}
+                                                                    className="accent-orange-400"
+                                                                />
+                                                                {opt}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {field.fieldType === 'file' && (
+                                                    <>
+                                                        <input
+                                                            type="file"
+                                                            accept={field.allowedFileFormats?.map(f => `.${f}`).join(',') || '*'}
+                                                            onChange={(e) => {
+                                                                const file = e.target.files[0]
+                                                                if (file) {
+                                                                    setFileUploads({ ...fileUploads, [field.fieldId]: file })
+                                                                }
+                                                            }}
+                                                            className="w-full px-4 py-2.5 bg-stone-700 border border-stone-600 rounded-lg text-white file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-orange-400 file:text-white hover:file:bg-orange-500"
+                                                        />
+                                                        {field.allowedFileFormats?.length > 0 && (
+                                                            <p className="text-stone-500 text-xs mt-1">Allowed: {field.allowedFileFormats.join(', ')}</p>
+                                                        )}
+                                                        {fileUploads[field.fieldId] && (
+                                                            <p className="text-green-400 text-xs mt-1">Selected: {fileUploads[field.fieldId].name}</p>
+                                                        )}
+                                                    </>
                                                 )}
                                                 {field.fieldType === 'note' && (
                                                     <p className="text-stone-400 text-sm italic">{field.placeholder || field.label}</p>

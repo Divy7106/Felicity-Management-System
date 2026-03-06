@@ -229,20 +229,20 @@ function OrgCreator() {
             {stage === 1 && createOrganizer &&
                 <div>
                     <div className="w-full">
-                        <h1 className="text-white text-4xl m-4 mt-7">Organization Created Succefully</h1>
+                        <h1 className="text-white text-3xl m-4 mt-7">Organization Created Succefully</h1>
                     </div>
                     <div className="bg-stone-900 m-4 px-2 rounded-t-2xl mt-7 mb-0">
                         <p className="text-2xl text-white ml-4 mr-4 py-2">{createdOrganizer.organizerName}</p>
                         <p className="text-lg text-stone-500 ml-4 mr-4">{createdOrganizer.description.slice(0, 200) + "..."}</p>
                     </div>
-                    <div className="mt-0 m-4 flex rounded-lg">
+                    <div className="mt-0 m-4 flex rounded-lg overflow-x-scroll">
                         <div className="w-fit bg-stone-900 rounded-bl-xl pl-2">
                             <p className="text-xl text-white ml-4 mr-4 mt-6 mb-2">Category: </p>
                             <p className="text-xl text-white ml-4 mr-4 mb-2">Email: </p>
                             <p className="text-xl text-white ml-4 mr-4 mb-2">Password: </p>
                             <p className="text-xl text-white ml-4 mr-4 mb-6">Contact Email: </p>
                         </div>
-                        <div className="bg-stone-900 rounded-br-2xl overflow-scroll">
+                        <div className="bg-stone-900 rounded-br-2xl w-full">
                             <p className="text-xl text-stone-600 ml-4 mr-4 mt-6 mb-2">{createdOrganizer.category}</p>
                             <p className="text-xl text-stone-600 ml-4 mr-4 mb-2">{createdOrganizer.email}</p>
                             <p className="text-xl text-orange-400 ml-4 mr-4 mb-2 font-mono">{createdOrganizer.generatedPassword}</p>

@@ -40,6 +40,11 @@ const router = createBrowserRouter([
         element: <LoginPage />
       },
 
+      {
+        path: '',
+        element: <LoginPage />
+      },
+
 
       {
         path: 'participant-dashboard',

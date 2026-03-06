@@ -101,7 +101,7 @@ userSchema.pre("validate", function () {
 userSchema.pre("save", async function () {
     if (!this.isModified("password")) return;
     try {
-        const saltRounds = 10;
+        const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
         this.password = await bcrypt.hash(this.password, saltRounds);   
     } catch (err) {
         throw new Error("Failed to hash password");

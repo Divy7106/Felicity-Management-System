@@ -11,7 +11,7 @@ function RoleCheckLayer({allowedRoles, children}) {
         // Wait a bit for userData to load from App.jsx useEffect
         const timer = setTimeout(() => {
             setIsChecking(false)
-        }, 100)
+        }, 1000)
 
         return () => clearTimeout(timer)
     }, [])

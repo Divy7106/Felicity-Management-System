@@ -21,12 +21,13 @@ import { userRouter } from './routers/index.js'
 import { adminRouter } from './routers/index.js'
 import { organizerRouter } from './routers/index.js'
 import { participantRouter } from './routers/index.js'
+import fileRouter from './routers/fileRouter.js'
 
 // GETTING MIDDLEWARES :
 import {isLoggedIn} from './middlewares/index.js'
 
 // ENV VARIABLES :
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 3000
 const MONGO_URL = process.env.MONGO_URL
 
 const app = express()
@@ -35,7 +36,7 @@ const httpServer = createServer(app)
 // Socket.IO setup
 const io = new Server(httpServer, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: process.env.FRONTEND_BASE_URL,
         credentials: true,
     }
 })
@@ -48,8 +49,13 @@ await mongoose.connect(MONGO_URL)
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(cookieParser())
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
-app.use('/uploads', express.static('uploads'))
+app.use(cors({ origin: process.env.FRONTEND_BASE_URL, credentials: true }));
+
+// Public file serving from MongoDB
+app.use('/api/files', fileRouter)
+
+// Health check for Render
+app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }))
 
 app.use('/api/auth', userAuthRouter)
 

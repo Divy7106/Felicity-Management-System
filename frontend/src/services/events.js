@@ -1,32 +1,27 @@
-import axios from 'axios'
-
-const eventAPI = axios.create({
-    baseURL: '/api',
-    withCredentials: true,
-})
+import api from './api'
 
 // Unified event creation endpoint
-const createEvent = (eventData) => eventAPI.post('/organizer/create-event', eventData, {
+const createEvent = (eventData) => api.post('/organizer/create-event', eventData, {
     headers: {
         'Content-Type': 'multipart/form-data'
     }
 })
 
 // DRraft creation endpoint
-const createEventDraft = (eventData) => eventAPI.post('/organizer/create-event-draft', eventData, {
+const createEventDraft = (eventData) => api.post('/organizer/create-event-draft', eventData, {
     headers: {
         'Content-Type': 'multipart/form-data'
     }
 })
 
 // Get minimal event details for dashboard
-const getOrgMinEvents = () => eventAPI.get('/organizer/get-org-min-events')
+const getOrgMinEvents = () => api.get('/organizer/get-org-min-events')
 
 // Get full event details by ID
-const getOrgMaxEvent = (eventId) => eventAPI.get(`/organizer/get-org-max-event/${eventId}`)
+const getOrgMaxEvent = (eventId) => api.get(`/organizer/get-org-max-event/${eventId}`)
 
 // Edit event form
-const editEventForm = (eventId, data) => eventAPI.put(`/organizer/edit-event-form/${eventId}`, data)
+const editEventForm = (eventId, data) => api.put(`/organizer/edit-event-form/${eventId}`, data)
 
 export {
     createEvent,

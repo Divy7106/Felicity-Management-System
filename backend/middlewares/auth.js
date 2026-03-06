@@ -3,8 +3,17 @@ import user from "../schema/userSchema/userSchema.js"
 
 async function isLoggedIn(req, res, next) {
     try {
-        if(req.cookies.sessionId) {
-            const userIds = verifyToken(req.cookies.sessionId)
+        // Accept token from cookie OR Authorization header
+        let token = req.cookies.sessionId
+        if (!token) {
+            const authHeader = req.headers.authorization
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                token = authHeader.split(' ')[1]
+            }
+        }
+
+        if(token) {
+            const userIds = verifyToken(token)
             const userData = await user.findById(userIds.userId)
 
             if(!userData) {

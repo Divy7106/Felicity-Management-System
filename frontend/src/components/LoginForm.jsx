@@ -18,6 +18,7 @@ const LoginForm = () => {
     const navigate = useNavigate()
     const { updateUserData } = useContext(UserContext)
     const [errors, setErrors] = useState({});
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -61,6 +62,7 @@ const LoginForm = () => {
         e.preventDefault();
 
         if (validateForm()) {
+            setIsLoading(true);
             formData.role = "Participant"
 
             await loginUser(formData)
@@ -81,6 +83,8 @@ const LoginForm = () => {
                     setErrors((prev) => {
                         return { ...prev, backendError: err.response?.data?.error }
                     })
+                }).finally(() => {
+                    setIsLoading(false);
                 })
         }
     };
@@ -150,18 +154,6 @@ const LoginForm = () => {
                         </svg>'
                 />
 
-                {/*Forgot Password */}
-                <div className="flex items-center justify-between mb-6 m-8 mt-0">
-                    <Button
-                        isbaseStyles={false}
-                        className="text-sm text-orange-300 hover:text-orange-500 font-medium"
-                        variant="custom"
-
-                    >
-                        Forgot password?
-                    </Button>
-                </div>
-
                 {/* Submit Button */}
                 <div className='m-8'>
                     {errors.backendError && (
@@ -172,8 +164,17 @@ const LoginForm = () => {
                         variant="primary"
                         className='w-full h-10'
                         isbaseStyles={false}
+                        disabled={isLoading}
                     >
-                        Log In
+                        {isLoading ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                </svg>
+                                Logging in...
+                            </span>
+                        ) : 'Log In'}
                     </Button>
                 </div>
                 {/* Signup Link */}

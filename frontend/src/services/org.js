@@ -1,30 +1,25 @@
-import axios from 'axios'
 import { stringify } from 'qs'
+import api from './api'
 
-const orgAPI = axios.create({
-    baseURL: '/api',
-    withCredentials: true,
-})
-
-const createOrganizer = (organizerData) => orgAPI.post('/admin/create-org', stringify(organizerData), {
+const createOrganizer = (organizerData) => api.post('/admin/create-org', stringify(organizerData), {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
 })
 
 // Admin dashboard
-const getDashboardStats = () => orgAPI.get('/admin/dashboard-stats')
+const getDashboardStats = () => api.get('/admin/dashboard-stats')
 
 // Organizer management
-const getAdminOrganizers = (search = '') => orgAPI.get('/admin/organizers', { params: { search } })
-const deleteOrganizer = (organizerId) => orgAPI.delete(`/admin/delete-organizer/${organizerId}`)
+const getAdminOrganizers = (search = '') => api.get('/admin/organizers', { params: { search } })
+const deleteOrganizer = (organizerId) => api.delete(`/admin/delete-organizer/${organizerId}`)
 
 // Password reset management
-const getPasswordResetRequests = () => orgAPI.get('/admin/password-reset-requests')
+const getPasswordResetRequests = () => api.get('/admin/password-reset-requests')
 const changeOrganizerPassword = (requestId, newPassword) =>
-    orgAPI.put(`/admin/change-organizer-password/${requestId}`, { newPassword })
+    api.put(`/admin/change-organizer-password/${requestId}`, { newPassword })
 const rejectPasswordReset = (requestId) =>
-    orgAPI.put(`/admin/reject-password-reset/${requestId}`)
+    api.put(`/admin/reject-password-reset/${requestId}`)
 
 export {
     createOrganizer,
